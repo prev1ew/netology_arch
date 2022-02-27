@@ -1,23 +1,10 @@
+import sys
+from time import sleep
 import urllib.request
 import gdrive
 import os
 from tqdm import tqdm
 import instaloader
-
-# filename = 'test.jpg'
-# ig = instaloader.Instaloader()
-# dp = 'iwanshes'
-#
-# profile = ig.check_profile_id(dp.lower())
-# url_pic = profile.profile_pic_url
-#
-# urllib.request.urlretrieve(url_pic, filename)
-#
-# service = gdrive.googledrive_authenticate()
-#
-# files = [filename]
-#
-# gdrive.upload_pic(service, files)
 
 
 class Arch:
@@ -25,8 +12,6 @@ class Arch:
         self.filename = "test.jpg"
         self.dp = "iwanshes"
         self.ig = instaloader.Instaloader()
-        self.is_filled = False
-        self.folder_instagram = ''
 
     def download_profile_pic(self):
         profile = self.ig.check_profile_id(self.dp.lower())
@@ -54,41 +39,78 @@ class Arch:
             item()
 
     def archive_latest_posts(self):
-        inputs(self)
-        prof = self.ig.check_profile_id(self.dp.lower())
-        max_count = 5
-        count = 1
-        for post in prof.get_posts():
-            res = self.ig.download_post(post, self.dp)
-            photo_name = str(post.date) + '.jpg'
-            urllib.request.urlretrieve(post.url, photo_name)
-            print(res)
 
-            if max_count < count:
+        # preparations
+        inputs(self, False)
+        max_count = 5
+        try:
+            temp_input = int(input('Input desired quantity of photos (default=5): '))
+            if temp_input:
+                max_count = temp_input
+        except ValueError:
+            print('Value was set to default value (5).')
+
+        draw_progress_bar(0, post_text='preparations')
+        prof = self.ig.check_profile_id(self.dp.lower())
+        draw_progress_bar(0.15, post_text='downloading')
+
+        # getting files
+        posts = prof.get_posts()
+        count = 1
+        downloaded_files = []
+        for post in posts:
+            photo_name = str(post.date) + '.jpg'
+            # тут на виндовсе возможна ошибка со знаком двоиточия
+            # photo_name = photo_name.replace(':', '-')
+            urllib.request.urlretrieve(post.url, photo_name)
+            downloaded_files.append(photo_name)
+
+            if max_count <= count:
                 break
 
             count += 1
 
+        # uploading files
+        draw_progress_bar(0.45, post_text='uploading')
+        gdrive_service = gdrive.googledrive_authenticate()
+        gdrive.upload_pic(gdrive_service, downloaded_files, gdrive.get_id_of_folder(gdrive_service, arch.dp))
+        draw_progress_bar(0.85, post_text='cleaning')
 
-def inputs(arche):
-    if not arche.is_filled:
+        for file in downloaded_files:
+            delete_file(file)
+        draw_progress_bar(1, post_text='done\n')
+
+
+def delete_file(filename):
+    if os.path.isfile(filename):
+        os.remove(filename)
+
+
+def draw_progress_bar(percent, bar_len=20, prefix='', post_text=''):
+    # percent float from 0 to 1.
+    sys.stdout.write("\r")
+    sys.stdout.write(str(prefix)
+                     + "[{:<{}}] {:.0f}% ".format("=" * int(bar_len * percent), bar_len, percent * 100)
+                     + str(post_text))
+    sys.stdout.flush()
+
+
+def inputs(arche, fn_is_needed=True):
+    if fn_is_needed:
         newname = input("Filename: ") + '.jpg'
         if newname != '.jpg':
             arche.filename = newname
 
-        arche.dp = input("Username: ")
-
-
-
+    arche.dp = input("Username: ")
 
 
 arch = Arch()
 
 while True:
-    n = input("1 = Archive avatar \n "
-              "2 = Download avatar \n "
-              "3 = Archive latest posts \n "
-              "Any other input = exit \n "
+    n = input("1 = Archive avatar \n"
+              "2 = Download avatar \n"
+              "3 = Archive latest posts \n"
+              "Any other input = exit \n"
               "Your input: ")
     if n == '1':
         inputs(arch)
