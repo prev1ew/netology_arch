@@ -39,7 +39,6 @@ class Arch:
             item()
 
     def archive_latest_posts(self):
-
         # preparations
         inputs(self, False)
         max_count = 5
