@@ -47,9 +47,9 @@ def create_folder(service, name):
         'mimeType': 'application/vnd.google-apps.folder',
         'parents': ''
     }
-    folder_instagram = service.files().create(body=file_metadata,
+    created_folder = service.files().create(body=file_metadata,
                                                    fields='id').execute()
-    return folder_instagram['id']
+    return created_folder['id']
 
 
 def get_id_of_folder(service, name_of_folder):

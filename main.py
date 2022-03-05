@@ -1,5 +1,4 @@
 import sys
-from time import sleep
 import urllib.request
 import gdrive
 import os
@@ -75,6 +74,7 @@ class Arch:
         gdrive.upload_pic(gdrive_service, downloaded_files, gdrive.get_id_of_folder(gdrive_service, arch.dp))
         draw_progress_bar(0.85, post_text='cleaning')
 
+        # cleaning
         for file in downloaded_files:
             delete_file(file)
         draw_progress_bar(1, post_text='done\n')
@@ -111,11 +111,11 @@ while True:
               "3 = Archive latest posts \n"
               "Any other input = exit \n"
               "Your input: ")
+
     if n == '1':
         inputs(arch)
         arch.archive()
         print("File is Archived")
-
     elif n == '2':
         inputs(arch)
         arch.download_with_progressbar()
